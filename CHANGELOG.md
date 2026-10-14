@@ -10,6 +10,8 @@ All notable changes to this project will be documented here.
   Cursor's automatic `custom:` prefix.
 - Encode replayed assistant tool call arguments sent as JSON objects, which
   CodeBuddy otherwise rejects with error 11101.
+- Add a Responses API compatibility layer for Codex, including SSE output,
+  function calls, and tool-result replay.
 
 ## [0.2.0] - 2026-10-14
 

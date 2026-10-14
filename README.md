@@ -100,6 +100,27 @@ CodeBuddy 账户的远程模型配置与本机企业自定义模型缓存，并�
 “Add Custom Model”中填写 `zhuzhu-gpt-5.6-sol`；Cursor 内部自动形成的
 `custom:zhuzhu-gpt-5.6-sol` 也会被代理正确识别。
 
+## Codex
+
+Codex 仅使用 Responses API。代理提供 `/v1/responses` 转换层；在
+`%USERPROFILE%\.codex\config.toml` 中配置：
+
+```toml
+model = "zhuzhu-gpt-5.6-sol"
+model_provider = "zhuzhu-local"
+model_reasoning_effort = "high"
+
+[model_providers.zhuzhu-local]
+name = "CodeBuddy local"
+base_url = "http://127.0.0.1:8765/v1"
+wire_api = "responses"
+supports_websockets = false
+```
+
+已验证 Codex 0.162 的文本响应、Responses SSE、`exec_command` 工具调用及工具
+结果回传。CodeBuddy 不接受 reasoning 与 tools 同时显式传递；工具请求会使用
+模型默认推理设置。
+
 ## 配置
 
 所有配置均可用环境变量或当前目录的 `.env` 覆盖。默认限制为 10 MiB 请求体、

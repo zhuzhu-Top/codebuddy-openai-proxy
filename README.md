@@ -12,9 +12,9 @@ CodeBuddy 服务。凭据只在本机内存中使用，不会由本项目上传�
 - 系统：Windows 10/11（自动读取凭据依赖 Windows DPAPI）
 - Python：3.10–3.13
 - 接口：`GET /v1/models`、`GET /v1/models/{id}`、
-  `POST /v1/chat/completions`
-- 调用方式：OpenAI Python SDK、curl 及其他 Chat Completions 客户端
-- 未实现：Responses、Embeddings、音频和图像接口
+  `POST /v1/chat/completions`、`POST /v1/responses`
+- 调用方式：OpenAI Python SDK、curl、Codex 及其他兼容客户端
+- 未实现：Embeddings、音频和图像接口
 
 ## 安装与启动
 
@@ -102,8 +102,29 @@ CodeBuddy 账户的远程模型配置与本机企业自定义模型缓存，并�
 
 ## Codex
 
-Codex 仅使用 Responses API。代理提供 `/v1/responses` 转换层；在
-`%USERPROFILE%\.codex\config.toml` 中配置：
+新版 Codex 仅使用 Responses API。代理会把 `/v1/responses` 请求转换成
+CodeBuddy Chat Completions，并把文本、SSE 和函数调用结果转换回 Responses
+格式。
+
+### 1. 启动代理
+
+保持以下命令运行：
+
+```powershell
+codebuddy-openai-proxy serve
+```
+
+另开一个 PowerShell 确认服务正常：
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8765/health
+```
+
+应返回 `status: ok`。
+
+### 2. 配置 Codex
+
+编辑 `%USERPROFILE%\.codex\config.toml`，设置默认模型和本地 provider：
 
 ```toml
 model = "gpt-5.6-sol"
@@ -111,17 +132,63 @@ model_provider = "zhuzhu-local"
 model_reasoning_effort = "high"
 
 [model_providers.zhuzhu-local]
-name = "CodeBuddy local"
+name = "CodeBuddy Local Proxy"
 base_url = "http://127.0.0.1:8765/v1"
 wire_api = "responses"
 supports_websockets = false
 ```
 
+`api_key` 无需配置。代理同时接受 `gpt-5.6-sol` 和
+`zhuzhu-gpt-5.6-sol`，并解析为当前 CodeBuddy 账户中对应的真实模型。
+
+配置后完全退出并重新打开 Codex。Codex 修改模型或推理等级时可能重写文件顶部的
+`model` 和 `model_reasoning_effort`，但应保留 `model_provider =
+"zhuzhu-local"`。
+
+### 3. Microsoft Store 版
+
+Microsoft Store 中的应用进程名可能显示为 `ChatGPT.exe`，其中的 Codex 工作区
+仍读取同一个 `%USERPROFILE%\.codex\config.toml`。
+
+商店版模型菜单只显示 OpenAI 内置标签，不能显示自定义 provider 名称。因此菜单
+中的 “5.6 Sol”不会显示成 “CodeBuddy Local Proxy”；真正决定请求去向的是
+`model_provider = "zhuzhu-local"`。选择 “5.6 Sol”后，请检查该设置没有被改回
+其他 provider。
+
+### 4. 验证请求经过本地代理
+
+在 Codex 中发送一条消息。运行代理的窗口应出现类似日志：
+
+```text
+GET /v1/models?client_version=... 200 OK
+POST /v1/responses 200 OK
+```
+
+看到 `POST /v1/responses` 即可确认 Codex 调用了
+`http://127.0.0.1:8765/v1`，而不是直接请求 OpenAI。
+
+也可以用 Codex CLI 验证：
+
+```powershell
+codex exec --skip-git-repo-check "Reply with exactly CODEX_LOCAL_OK"
+```
+
 已验证 Codex 0.162 的文本响应、Responses SSE、`exec_command` 工具调用及工具
-结果回传。CodeBuddy 不接受 reasoning 与 tools 同时显式传递；工具请求会使用
-模型默认推理设置。Codex 桌面端的模型菜单只显示内置名称，因此菜单中的
-“5.6 Sol”会使用这里配置的 `zhuzhu-local` provider，并由代理解析为 CodeBuddy
-的真实模型。
+结果回传。CodeBuddy 不接受 reasoning 与 tools 同时显式传递；代理会在工具请求
+中省略显式 reasoning 参数，让模型使用默认推理设置。
+
+### Codex 故障排查
+
+- 返回 `404 model_not_found`：更新并重启代理；Codex 可能发送裸模型名
+  `gpt-5.6-sol`，新版本代理会自动解析。
+- 提示 `/v1/responses` 未实现：当前运行的是旧代理进程，停止占用 8765 端口的
+  旧进程后重新执行 `codebuddy-openai-proxy serve`。
+- 模型菜单没有自定义名称：这是商店版 UI 的限制；以代理窗口是否收到
+  `POST /v1/responses` 为准。
+- 请求出现 11128：通常是 Codex 内置的大段提示被上游拦截；当前转换层会过滤已知
+  Codex 样板元数据，请更新到最新版。
+- 请求出现 11150：CodeBuddy 不接受 reasoning 与 tools 同时显式传递；当前版本
+  已自动兼容。
 
 ## 配置
 

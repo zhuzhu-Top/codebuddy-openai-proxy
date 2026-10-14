@@ -106,7 +106,7 @@ Codex 仅使用 Responses API。代理提供 `/v1/responses` 转换层；在
 `%USERPROFILE%\.codex\config.toml` 中配置：
 
 ```toml
-model = "zhuzhu-gpt-5.6-sol"
+model = "gpt-5.6-sol"
 model_provider = "zhuzhu-local"
 model_reasoning_effort = "high"
 
@@ -119,7 +119,9 @@ supports_websockets = false
 
 已验证 Codex 0.162 的文本响应、Responses SSE、`exec_command` 工具调用及工具
 结果回传。CodeBuddy 不接受 reasoning 与 tools 同时显式传递；工具请求会使用
-模型默认推理设置。
+模型默认推理设置。Codex 桌面端的模型菜单只显示内置名称，因此菜单中的
+“5.6 Sol”会使用这里配置的 `zhuzhu-local` provider，并由代理解析为 CodeBuddy
+的真实模型。
 
 ## 配置
 

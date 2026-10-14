@@ -65,6 +65,8 @@ def responses_to_chat(body: dict[str, Any]) -> dict[str, Any]:
                     "content": _content_text(item.get("output")),
                 }
             )
+        elif item_type in {"additional_tools", "configuration_update"}:
+            continue
         else:
             raise RequestValidationError(
                 f"Unsupported Responses input type: {item_type}"

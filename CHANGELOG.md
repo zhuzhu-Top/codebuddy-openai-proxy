@@ -12,6 +12,8 @@ All notable changes to this project will be documented here.
   CodeBuddy otherwise rejects with error 11101.
 - Add a Responses API compatibility layer for Codex, including SSE output,
   function calls, and tool-result replay.
+- Accept Codex's bare model names while keeping `zhuzhu-` aliases in the
+  public model list.
 
 ## [0.2.0] - 2026-10-14
 

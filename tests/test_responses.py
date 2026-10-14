@@ -35,6 +35,8 @@ def test_responses_request_converts_messages_tools_and_results() -> None:
                     "call_id": "call_1",
                     "output": "3",
                 },
+                {"type": "additional_tools", "tools": []},
+                {"type": "configuration_update", "reasoning_effort": "high"},
             ],
             "tools": [
                 {

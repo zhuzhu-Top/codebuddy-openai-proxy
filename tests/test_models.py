@@ -30,6 +30,21 @@ def test_model_alias_is_cursor_safe() -> None:
     assert model_alias(model) == "zhuzhu-gpt-5.6-sol"
 
 
+@pytest.mark.asyncio
+async def test_resolves_codex_bare_model_name() -> None:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    settings = Settings(
+        models=("custom:gpt-5.6-sol|gpt-5.6-sol",),
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        catalog = ModelCatalog(settings, FakeCredentials(), client)
+        assert await catalog.resolve("gpt-5.6-sol") == (
+            "custom:gpt-5.6-sol|gpt-5.6-sol"
+        )
+
+
 def test_loads_latest_enterprise_model_cache(tmp_path: Path) -> None:
     database = tmp_path / "state.vscdb"
     connection = sqlite3.connect(database)

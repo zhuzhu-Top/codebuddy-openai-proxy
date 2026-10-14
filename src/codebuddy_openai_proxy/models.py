@@ -73,7 +73,7 @@ class ModelCatalog:
             else requested
         )
         for model in models:
-            if normalized == model_alias(model):
+            if normalized in {model_alias(model), _model_short_name(model)}:
                 return model
         return None
 
@@ -146,7 +146,11 @@ def _model_ids(models: Any) -> tuple[str, ...]:
 
 
 def model_alias(model_id: str) -> str:
+    return f"{MODEL_ALIAS_PREFIX}{_model_short_name(model_id)}"
+
+
+def _model_short_name(model_id: str) -> str:
     name = model_id.rsplit("|", 1)[-1]
     if name.startswith("custom:"):
         name = name[len("custom:") :]
-    return f"{MODEL_ALIAS_PREFIX}{name}"
+    return name

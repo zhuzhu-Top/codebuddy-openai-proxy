@@ -131,9 +131,7 @@ def test_codex_boilerplate_is_not_forwarded_upstream() -> None:
         }
     )
     assert chat["messages"] == [{"role": "user", "content": "Keep me"}]
-    assert [tool["function"]["name"] for tool in chat["tools"]] == [
-        "exec_command"
-    ]
+    assert [tool["function"]["name"] for tool in chat["tools"]] == ["exec_command"]
 
 
 def test_chat_completion_converts_to_responses_sse() -> None:
